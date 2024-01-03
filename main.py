@@ -137,4 +137,28 @@ async def purge(ctx, limit: int):
     )
     await ctx.send(embed=embed, delete_after=5)
 
+@bot.command()
+async def verify(ctx):
+    user = ctx.author
+    captcha_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    image = ImageCaptcha()
+    data = image.generate(captcha_text)
+    image.write(captcha_text, 'captcha.png')
+    await ctx.send(f"Here's your CAPTCHA. Enter the code to verify!")
+    await ctx.send(file=discord.File('captcha.png'))
+    def check(message):
+        return message.author == ctx.author and message.content == captcha_text
+
+    try:
+        msg = await bot.wait_for('message', timeout=60.0, check=check)
+        guild = ctx.guild
+        role = discord.utils.get(guild.roles, id=1177239019667603538)
+        if role:
+            await user.add_roles(role)
+            await ctx.send("You have been verified and given the role!")
+        else:
+            await ctx.send("Role not found.")
+    except asyncio.TimeoutError:
+        await ctx.send("Verification timed out. Please try again.")
+
 bot.run('BOT_TOKEN')
